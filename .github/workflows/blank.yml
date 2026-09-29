@@ -1,0 +1,43 @@
+name: Build Offline Android APK
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Code from Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java Environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Project Dependencies
+        run: npm install
+
+      - name: Build Web Assets
+        run: npm run build
+
+      - name: Add Capacitor and Android Package
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap add android
+          npx cap sync android
+
+      - name: Compile Native APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Make APK Downloadable
+        uses: actions/upload-artifact@v4
+        with:
+          name: KHAIR-Offline-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
